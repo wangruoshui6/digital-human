@@ -1,0 +1,46 @@
+diff --git a/config.yaml b/config.yaml
+index b05871d..f9a687f 100644
+--- a/config.yaml
++++ b/config.yaml
+@@ -17,8 +17,8 @@ batch_size: 16
+ customvideo_config: ''
+ 
+ # -------- TTS ----------------------------------------------------------
+-tts: edgetts                   # edgetts / gpt-sovits / cosyvoice / fishtts / tencent / doubao / indextts2 / azuretts / qwentts
+-REF_FILE: ''                   # voice name or reference audio file path (wav, 16kHz, mono)
++tts: qwentts
++REF_FILE: Cherry
+ REF_TEXT: ''                   # reference text for voice cloning (English or Chinese)
+ TTS_SERVER: ''                 # TTS server URL, no trailing slash
+ 
+diff --git a/tts/qwentts.py b/tts/qwentts.py
+index 8be36be..e869ef7 100644
+--- a/tts/qwentts.py
++++ b/tts/qwentts.py
+@@ -21,6 +21,8 @@ except ImportError:
+     raise
+ 
+ 
++_QWEN_VOICES = {"cherry", "ethan", "nofish", "jada", "dylan", "sunny", "peter", "eric", "kiki", "serena", "coco", "anna", "bella", "jack", "leo"}
++
+ SRC_SR = 24000   # Qwen TTS 只支持 24kHz 输出
+ DST_SR = 16000   # 项目标准采样率
+ 
+@@ -122,6 +124,10 @@ class QwenTTS(BaseTTS):
+         t_start = time.perf_counter()
+ 
+         ref_file = textevent.get('tts', {}).get('ref_file',self.voice)
++        # 音色兜底：非 Qwen 支持的音色（如 edge-tts 的 zh-CN-XiaoxiaoNeural）回退到默认音色
++        if ref_file and ref_file.strip().lower() not in _QWEN_VOICES:
++            logger.info(f'音色 {ref_file} 不被 Qwen TTS 支持，回退到 {self.voice}')
++            ref_file = self.voice
+ 
+         # 重置状态
+         self._remainder = np.array([], dtype=np.float32)
+@@ -216,4 +222,4 @@ class QwenTTS(BaseTTS):
+ 
+     def stop_tts(self):
+         self._tts_client.close()
+-        logger.info("QwenTTS 已关闭")
+\ No newline at end of file
++        logger.info("QwenTTS 已关闭")

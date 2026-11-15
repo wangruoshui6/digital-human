@@ -293,7 +293,7 @@ import httpx, json as _json, asyncio
 
 LT_BASE = "http://127.0.0.1:8010"
 COSY_BASE = "http://127.0.0.1:8091"
-DEFAULT_EDGE_VOICE = "zh-CN-XiaoxiaoNeural"  # cosyvoice:* refaudio 统一替换为此
+DEFAULT_EDGE_VOICE = "Cherry"  # cosyvoice:* refaudio 统一替换为此（Qwen TTS 音色）
 
 
 async def _cosyvoice_speak_bg(clone: str, sid: str, text: str):
