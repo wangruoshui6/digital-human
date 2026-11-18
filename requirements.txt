@@ -21,6 +21,13 @@ uvicorn>=0.27              # ASGI 服务器
 pydantic>=2.6              # 数据校验
 httpx>=0.27                # HTTP 客户端（调用 LiveTalking 等）
 
+# ---------- 语音识别 ASR（Brain /asr 接口）----------
+# 注意：server.py 启动时会预加载 Whisper（约 4s，避免首次识别冷启动），
+#       缺少 openai-whisper 会导致 Brain 启动即报错。
+openai-whisper>=20231117   # Whisper 语音识别模型
+soundfile>=0.12            # 音频读写（wav/mp3 解码）
+scipy>=1.11                # 音频重采样与信号处理
+
 # ---------- RAG 知识库 ----------
 chromadb>=0.5              # 向量数据库
 sentence-transformers>=3.0 # 文本向量化（嵌入模型）
