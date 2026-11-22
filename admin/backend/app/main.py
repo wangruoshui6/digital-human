@@ -3,7 +3,7 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from app.auth import ensure_default_admin, get_current_admin
@@ -42,8 +42,20 @@ async def proxy_lt(request: Request, path: str):
         url += "?" + qs
     body = await request.body()
     headers = {k: v for k, v in request.headers.items() if k.lower() not in ("host", "content-length")}
-    async with httpx.AsyncClient(timeout=30.0) as c:
-        r = await c.request(request.method, url, headers=headers, content=body or None)
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as c:
+            r = await c.request(request.method, url, headers=headers, content=body or None)
+    except httpx.RequestError as exc:
+        # LiveTalking 未启动/不可达时，返回结构化 JSON 而不是纯文本 500，
+        # 让前端能显示可读提示（否则 r.json() 会报 "Unexpected token"）
+        return JSONResponse(
+            status_code=502,
+            content={
+                "error": "LiveTalking 服务不可达",
+                "detail": f"{exc.__class__.__name__}: {exc}",
+                "hint": "请先启动 third_party/LiveTalking（py -3.12 app.py --listenport 8010），并确认 8010 端口已监听",
+            },
+        )
     return Response(content=r.content, status_code=r.status_code, headers=dict(r.headers))
 
 
