@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>灵山胜境 · 管理后台登录</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;font:14px/1.5 "Microsoft YaHei",sans-serif;background:linear-gradient(135deg,#1a3a2a,#2d5a3f 60%,#3f7355);padding:20px}
+.box{width:100%;max-width:380px;background:#fff;border-radius:12px;padding:32px 28px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.brand{text-align:center;margin-bottom:26px}
+.brand .icon{font-size:34px;line-height:1}
+.brand h1{font-size:19px;color:#1a3a2a;font-weight:600;margin-top:10px}
+.brand p{font-size:12.5px;color:#8a9a8f;margin-top:6px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12.5px;color:#55665c;margin-bottom:6px}
+.field input{width:100%;padding:11px 13px;border:1px solid #dfe6e1;border-radius:8px;font-size:14px;background:#fafcfb;transition:.2s}
+.field input:focus{outline:none;border-color:#2d5a3f;background:#fff;box-shadow:0 0 0 3px rgba(45,90,63,.09)}
+button{width:100%;padding:12px;border:none;border-radius:8px;background:#2d5a3f;color:#fff;font-size:14.5px;cursor:pointer;transition:.2s;margin-top:6px}
+button:hover:not(:disabled){background:#3f7355}
+button:disabled{opacity:.6;cursor:not-allowed}
+.msg{margin-top:14px;font-size:13px;padding:9px 12px;border-radius:7px;display:none}
+.msg.err{display:block;background:#fdecea;color:#c0392b;border:1px solid #f5c6c2}
+.hint{margin-top:20px;padding-top:16px;border-top:1px solid #eef2ef;font-size:12px;color:#94a29a;line-height:1.7}
+.hint code{background:#f1f5f2;padding:1px 5px;border-radius:4px;color:#3f7355;font-size:11.5px}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="brand">
+    <div class="icon">🏯</div>
+    <h1>灵山胜境 · 智慧导览管理后台</h1>
+    <p>请登录后继续操作</p>
+  </div>
+
+  <form id="loginForm" onsubmit="doLogin(event)">
+    <div class="field">
+      <label for="username">用户名</label>
+      <input id="username" name="username" autocomplete="username" placeholder="请输入管理员账号" required autofocus>
+    </div>
+    <div class="field">
+      <label for="password">密码</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" placeholder="请输入密码" required>
+    </div>
+    <button id="submitBtn" type="submit">登 录</button>
+    <div id="msg" class="msg"></div>
+  </form>
+
+  <div class="hint">
+    初始账号在首次启动后台时自动生成，用户名 <code>admin</code>，密码会写入
+    <code>admin/backend/data/admin_credentials.txt</code>，同时打印在启动控制台。<br>
+    登录有效期 8 小时，密码使用 bcrypt 哈希存储。
+  </div>
+</div>
+
+<script>
+var API = '';
+
+function showMsg(text) {
+  var el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = 'msg err';
+}
+
+async function doLogin(e) {
+  e.preventDefault();
+  var btn = document.getElementById('submitBtn');
+  var u = document.getElementById('username').value.trim();
+  var p = document.getElementById('password').value;
+  if (!u || !p) { showMsg('请填写用户名和密码'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '登录中...';
+  try {
+    var res = await fetch(API + '/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u, password: p })
+    });
+    if (!res.ok) {
+      var body = await res.json().catch(function () { return {}; });
+      throw new Error(body.detail || ('登录失败（' + res.status + '）'));
+    }
+    var data = await res.json();
+    localStorage.setItem('admin_token', data.token);
+    localStorage.setItem('admin_username', data.username || u);
+    location.replace('index.html');
+  } catch (err) {
+    showMsg(err.message || '登录失败，请重试');
+    btn.disabled = false;
+    btn.textContent = '登 录';
+  }
+}
+</script>
+</body>
+</html>

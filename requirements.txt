@@ -34,6 +34,8 @@ sentence-transformers>=3.0 # 文本向量化（嵌入模型）
 
 # ---------- 管理后台 (Admin) ----------
 sqlalchemy>=2.0            # ORM
+pyjwt>=2.8                 # 管理后台登录凭证（HS256 JWT）
+bcrypt>=4.0                # 管理员密码哈希（bcrypt 加盐，库中不存明文）
 pydantic>=2.6              # 同上
 httpx>=0.27                # 同上
 

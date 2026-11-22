@@ -72,6 +72,38 @@ input[type=file]{width:auto}
 .avatar-loading .lf{height:100%;width:0%;background:#2d5a3f;border-radius:3px;transition:width .3s}
 @media(max-width:900px){.avatar-row{flex-direction:column}.avatar-right{width:100%}.avatar-video-box video{height:300px}}
 </style>
+<script>
+/* 登录态守卫：无 token 直接跳登录页；所有 API 请求自动带 Bearer Token */
+(function () {
+  var TK = 'admin_token';
+  var token = localStorage.getItem(TK);
+  if (!token) { location.replace('login.html'); return; }
+
+  var rawFetch = window.fetch.bind(window);
+  window.fetch = function (url, opts) {
+    opts = opts || {};
+    var isLt = String(url).indexOf('/lt/') === 0;   /* LiveTalking 代理是游客链路，不注入管理员凭据 */
+    if (!isLt) {
+      var headers = new Headers(opts.headers || {});
+      headers.set('Authorization', 'Bearer ' + token);
+      opts.headers = headers;
+    }
+    return rawFetch(url, opts).then(function (r) {
+      if (r.status === 401 && !isLt) {
+        localStorage.removeItem(TK);
+        location.replace('login.html');
+      }
+      return r;
+    });
+  };
+
+  window.adminLogout = function () {
+    localStorage.removeItem(TK);
+    localStorage.removeItem('admin_username');
+    location.replace('login.html');
+  };
+})();
+</script>
 </head>
 <body>
 <header>
@@ -82,7 +114,18 @@ input[type=file]{width:auto}
     <button onclick="switchPage('avatar',this)">形象管理</button>
     <button onclick="switchPage('report',this)">游客报告</button>
   </nav>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="whoami" style="font-size:12.5px;opacity:.85"></span>
+    <button onclick="adminLogout()" style="padding:6px 14px;border:1px solid rgba(255,255,255,.5);background:none;color:#fff;border-radius:6px;cursor:pointer;font-size:12.5px">退出登录</button>
+  </div>
 </header>
+<script>
+(function () {
+  var u = localStorage.getItem('admin_username');
+  var el = document.getElementById('whoami');
+  if (el && u) el.textContent = u;
+})();
+</script>
 <main>
   <div id="page-dashboard" class="page active">
     <div class="stats" id="stats"></div>
@@ -159,7 +202,7 @@ input[type=file]{width:auto}
             <a href="http://localhost:8010/avatar.html" target="_blank" class="btn btn-outline btn-sm">Avatar 生成</a>
             <a href="http://localhost:8010/admin.html" target="_blank" class="btn btn-outline btn-sm">LiveTalking 后台</a>
             <a href="http://localhost:8010/tts/index.html" target="_blank" class="btn btn-outline btn-sm">TTS 语音</a>
-            <a href="http://localhost:8011/" target="_blank" class="btn btn-outline btn-sm">用户端首页</a>
+            <a href="http://localhost:8015/" target="_blank" class="btn btn-outline btn-sm">用户端首页</a>
           </div>
         </div>
         <div class="card"><h3>🔄 角色替换</h3>
